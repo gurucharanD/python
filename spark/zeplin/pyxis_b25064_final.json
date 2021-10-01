@@ -1,0 +1,373 @@
+﻿{
+    "paragraphs": [
+        {
+            "text": "%spark.pyspark\nimport os\nimport urllib.request\nimport zipfile\nimport json\nimport logging\njob_name = \"acs_data\"\n\nformatter = '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - ln%(lineno)d - %(message)s'\nlogging.basicConfig(format=formatter)\nlogger = logging.getLogger(job_name)\nlogger.setLevel(logging.DEBUG)\n\nfrom pyspark.sql import SparkSession\nspark = SparkSession.builder.appName('acsdata').getOrCreate()\nes_hadoop = urllib.request.URLopener()\nes_hadoop.retrieve(\"http://download.elastic.co/hadoop/elasticsearch-hadoop-6.1.1.zip\", \"es-hadoop.zip\")\nwith zipfile.ZipFile(\"es-hadoop.zip\",\"r\") as zip_ref:\n    zip_ref.extractall()\n    \nos.environ['PYSPARK_SUBMIT_ARGS'] = '--jars elasticsearch-hadoop-6.1.1/dist/elasticsearch-spark-20_2.11-6.1.1.jar pyspark-shell'\n\n\nfrom pyspark.sql import SparkSession\nspark = SparkSession.builder.appName('acsdata').getOrCreate()\n\nes_write_conf_acs = {\n    \"es.nodes\" : \"https://vpc-elasticsearch-polarisapps-qc-kttkced2njswnhaa2n4mbou2cq.us-east-1.es.amazonaws.com\",\n    \"es.port\" : \"443\",\n    \"es.net.ssl\": \"true\",\n    \"es.nodes.wan.only\": \"true\",\n    \"es.resource\" : \"acsdata/data\",\n    \"es.input.json\" : \"yes\",\n\t\"es.mapping.id\": \"id\"\n}\n\ndf = spark.read.json('s3://271849239056-dev-datagov-stage-s3/datasource=acs/acs-pyxis/B25064')\n\n",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T06:26:19+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": [
+                    {
+                        "type": "TEXT",
+                        "data": "/tmp/zeppelin_pyspark-5274967674276886516.py:375: DeprecationWarning: URLopener style of invoking requests is deprecated. Use newer urlopen functions/methods\n  exec(code, _zcUserQueryNameSpace)\n"
+                    }
+                ]
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741531_1852590186",
+            "id": "20200820-054035_576797309",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T06:26:19+0000",
+            "dateFinished": "2020-08-20T06:26:57+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "focus": true,
+            "$$hashKey": "object:172"
+        },
+        {
+            "text": "%spark.pyspark\ndef generate_Additional_Fields(geoId, vintage, variableCode):\n    zipCode = geoId.split('US')[1]\n    code = variableCode.split('_')\n    id = '{}-{}-{}'.format(zipCode, vintage, variableCode)\n    return {'id': id, 'zipCode': zipCode, 'variableCode': code[0], 'variableCodeType': code[1]}",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T06:26:57+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": []
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741532_420026276",
+            "id": "20200820-054135_324240344",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T06:26:57+0000",
+            "dateFinished": "2020-08-20T06:26:57+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:173"
+        },
+        {
+            "text": "%spark.pyspark\n",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T06:48:13+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": []
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741532_-1340765476",
+            "id": "20200820-054308_1738367473",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T06:43:30+0000",
+            "dateFinished": "2020-08-20T06:43:30+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:174"
+        },
+        {
+            "text": "%spark.pyspark\n\ndef create_calculated_value(variableCode, variableCodeType, zipCode, vintage, estimatedValue,incomedata_rdd):\n    if(variableCode == \"B25119\"):\n        return estimatedValue\n    if(variableCode == \"B25064\"):\n        try:\n            income_test = list(filter(lambda x: (x['geoId']==zipCode), incomedata_rdd))\n            print('income_test$$$$$$$$',income_test)\n            return (12*estimatedValue)/income_test[0]['estimateValue']\n        except Exception as e:\n            logger.error(\"Error in calculation{}\".format(e))\n",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T07:24:20+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": []
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741532_1272713558",
+            "id": "20200820-054323_1039986743",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T07:24:20+0000",
+            "dateFinished": "2020-08-20T07:24:20+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:175"
+        },
+        {
+            "text": "%spark.pyspark\ndef acs_formatter(x,incomedata_rdd):\n    additional_Fields = generate_Additional_Fields(x['geoId'],\n                                                   x['vintage'],\n                                                   x['variableCode'])\n    if x['vintage'] == 2018:\n        calculated_value = create_calculated_value(additional_Fields['variableCode'],\n                                                   additional_Fields['variableCodeType'],\n                                                   additional_Fields['zipCode'],\n                                                   x['vintage'],\n                                                   x['estimateValue'],\n                                                   incomedata_rdd\n                                                   )\n    else:\n        calculated_value = x['estimateValue']\n\n    id = additional_Fields['id']\n    \n    return (id, json.dumps({\n        'id': id,\n        'geoId': additional_Fields['zipCode'],\n        'variableCodeType': additional_Fields['variableCodeType'],\n        'variableCode': additional_Fields['variableCode'],\n        'estimateValue':  x['estimateValue'],\n        'calculatedValue': calculated_value,\n        'vintage':  x['vintage']\n    })\n    )\n\ndef main():\n    try:\n        logger.info(\"Job {} started indexing acs data\".format(job_name))\n        \n\n        # *******************uncommented the below block of code to run the job again****************\n                \n        es_write_conf_acs = {\n            \"es.nodes\": \"https://vpc-elasticsearch-polarisapps-qc-kttkced2njswnhaa2n4mbou2cq.us-east-1.es.amazonaws.com\",\n            \"es.port\": \"443\",\n            \"es.net.ssl\": \"true\",\n            \"es.nodes.wan.only\": \"true\",\n            \"es.resource\": \"pyxis-demographics/demographics\",\n            \"es.input.json\": \"true\",\n            \"es.mapping.id\": \"id\"\n        }\n\n        incomedata_rdd=fetch_income_data_for_calculation(sc)\n        # print(incomedata_rdd[0])\n        # print(type(incomedata_rdd))\n        # print(incomedata_rdd[0]['geoId'])\n        \n        # res=list[filter(lambda x:(x['geoId']==20624),incomedata_rdd)]\n        \n        # res=list(filter(lambda x: (x['geoId']=='20624'), incomedata_rdd))\n        # print('res------->',res)\n        \n        # formatedRdd = []\n        \n        # formatedRdd = df.rdd.map(lambda x:acs_formatter(x,incomedata_rdd))\n        # df.rdd.map(lambda x:print('-=-=',x)).count()\n        formattedata = []\n        formatedRdd = []\n        \n        # fetch_income_data_for_calculation(sc)\n        # incomedata_rdd = sc.parallelize(requrired_income_data)\n\n        for row in df.rdd.toLocalIterator():\n            if len(formattedata)==5000:\n                formatedRdd = sc.parallelize(formattedata)\n                formatedRdd.saveAsNewAPIHadoopFile(\n                    path='-',\n                    outputFormatClass=\"org.elasticsearch.hadoop.mr.EsOutputFormat\",\n                    keyClass=\"org.apache.hadoop.io.NullWritable\",\n                    valueClass=\"org.elasticsearch.hadoop.mr.LinkedMapWritable\",\n                    conf=es_write_conf_acs)\n                    \n                formattedata = []\n                formatedRdd = []\n            else:\n                obj = acs_formatter(row,incomedata_rdd)\n                print(obj)\n                formattedata.append(obj)\n\n        formatedRdd = sc.parallelize(formattedata)\n        formatedRdd.saveAsNewAPIHadoopFile(\n            path='-',\n            outputFormatClass=\"org.elasticsearch.hadoop.mr.EsOutputFormat\",\n            keyClass=\"org.apache.hadoop.io.NullWritable\",\n            valueClass=\"org.elasticsearch.hadoop.mr.LinkedMapWritable\",\n            conf=es_write_conf_acs)\n        \n        # print(formatedRdd.collect())\n        \n        \n        # print(':::::::::::::::::::::::::::',formatedRdd.collect()[0])\n        \n        # formatedRdd.saveAsNewAPIHadoopFile(\n        #     path='-',\n        #     outputFormatClass=\"org.elasticsearch.hadoop.mr.EsOutputFormat\",\n        #     keyClass=\"org.apache.hadoop.io.NullWritable\",\n        #     valueClass=\"org.elasticsearch.hadoop.mr.LinkedMapWritable\",\n        #     conf=es_write_conf_acs)\n            \n        logger.info(\"Job {} inserted all  records shutting down\".format(job_name))\n\n        # ***********************************\n\n        logger.info(\"Job {} finished indexing acs data\".format(job_name))\n    except Exception as e:\n        logger.error(\"Error {}\".format(e))\n        raise e\n    finally:\n        print(\"Done!!!\")",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T07:41:55+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true,
+                "lineNumbers": true
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": []
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741532_1985082167",
+            "id": "20200820-054543_1155974489",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T07:41:55+0000",
+            "dateFinished": "2020-08-20T07:41:55+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:176"
+        },
+        {
+            "text": "%spark.pyspark\ndef fetch_income_data_for_calculation(spx):\n    print('fetch_income_data_for_calculation',spx)\n    requrired_income_data=[]\n    query = {\n        \"query\": {\n            \"bool\": {\n                \"filter\": [\n                    {\n                        \"bool\": {\n                            \"must\": [\n                                {\n                                    \"match\": {\n                                        \"variableCode\": \"B25119\"\n                                    }\n                                },\n                                {\n                                    \"match\": {\n                                        \"variableCodeType\": \"003\"\n                                    }\n                                },\n                                {\n                                    \"match\": {\n                                        \"vintage\": 2018\n                                    }\n                                }\n                            ]\n                        }\n                    }\n                ]\n            }\n        }\n    }\n    es_read_conf = {\n        \"es.nodes\": \"https://vpc-elasticsearch-polarisapps-qc-kttkced2njswnhaa2n4mbou2cq.us-east-1.es.amazonaws.com\",\n        \"es.port\": \"443\",\n        \"es.resource\": \"pyxis-demographics/demographics\",\n        \"es.nodes.wan.only\": \"true\",\n        \"es.query\": json.dumps(query)\n    }\n    # print('fetch_income_data_for_calculation----->',es_read_conf)\n    es_rdd = spx.newAPIHadoopRDD(\n        inputFormatClass=\"org.elasticsearch.hadoop.mr.EsInputFormat\",\n        keyClass=\"org.apache.hadoop.io.NullWritable\",\n        valueClass=\"org.elasticsearch.hadoop.mr.LinkedMapWritable\",\n        conf=es_read_conf)\n    # print('fetch_income_data_for_calculation----->',es_rdd)\n\n    # print('fetch_income_data_for_calculation----->')\n\n    for row in es_rdd.toLocalIterator():\n        requrired_income_data.append(row[1])\n        \n    # # print('fetch_income_data_for_calculation-88888888888888---->')\n\n    # incomedata_rdd=[]\n    # incomedata_rdd = sc.parallelize(requrired_income_data)\n    print('fetch_income_data_for_calculation enddddddd')\n    return requrired_income_data",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T08:53:30+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true,
+                "editorHide": false
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": []
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741532_1995369764",
+            "id": "20200820-061619_676179722",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T07:05:34+0000",
+            "dateFinished": "2020-08-20T07:05:34+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:177"
+        },
+        {
+            "text": "%spark.pyspark\nfetch_income_data_for_calculation(sc)",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T08:53:28+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true,
+                "editorHide": false
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741532_1825910229",
+            "id": "20200820-061131_1554559047",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T06:37:09+0000",
+            "dateFinished": "2020-08-20T06:37:10+0000",
+            "status": "FINISHED",
+            "errorMessage": "",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:178"
+        },
+        {
+            "text": "%spark.pyspark\nmain()",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T07:41:59+0000",
+            "config": {
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "colWidth": 12,
+                "editorMode": "ace/mode/python",
+                "fontSize": 9,
+                "results": {},
+                "enabled": true
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": [
+                    {
+                        "type": "HTML",
+                        "data": "<div class=\"result-alert alert-warning\" role=\"alert\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button><strong>Output is truncated</strong> to 102400 bytes. Learn more about <strong>ZEPPELIN_INTERPRETER_OUTPUT_LIMIT</strong></div>"
+                    }
+                ]
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904741533_1071601173",
+            "id": "20200820-061144_1188816455",
+            "dateCreated": "2020-08-20T06:25:41+0000",
+            "dateStarted": "2020-08-20T07:41:59+0000",
+            "dateFinished": "2020-08-20T07:47:09+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:179"
+        },
+        {
+            "text": "%spark.pyspark\ndef acs_formatter(x,incomedata_rdd):\n    additional_Fields = generate_Additional_Fields(x['geoId'],\n                                                   x['vintage'],\n                                                   x['variableCode'])\n    if x['vintage'] == 2018:\n        calculated_value = create_calculated_value(additional_Fields['variableCode'],\n                                                   additional_Fields['variableCodeType'],\n                                                   additional_Fields['zipCode'],\n                                                   x['vintage'],\n                                                   x['estimateValue'],\n                                                   incomedata_rdd\n                                                   )\n    else:\n        calculated_value = x['estimateValue']\n\n    id = additional_Fields['id']\n    \n    return (id, json.dumps({\n        'id': id,\n        'geoId': additional_Fields['zipCode'],\n        'variableCodeType': additional_Fields['variableCodeType'],\n        'variableCode': additional_Fields['variableCode'],\n        'estimateValue':  x['estimateValue'],\n        'calculatedValue': calculated_value,\n        'vintage':  x['vintage']\n    })\n    )\n\ndef main():\n    try:\n        logger.info(\"Job {} started indexing acs data\".format(job_name))\n        \n\n        # *******************uncommented the below block of code to run the job again****************\n                \n        es_write_conf_acs = {\n            \"es.nodes\": \"https://vpc-elasticsearch-polarisapps-qc-kttkced2njswnhaa2n4mbou2cq.us-east-1.es.amazonaws.com\",\n            \"es.port\": \"443\",\n            \"es.net.ssl\": \"true\",\n            \"es.nodes.wan.only\": \"true\",\n            \"es.resource\": \"pyxis-demographics/demographics\",\n            \"es.input.json\": \"true\",\n            \"es.mapping.id\": \"id\"\n        }\n\n\n\n        # df = sh.ssc.read.json(\"{}/{}\".format(mh.bucket_key, \"B25064\"))\n        \n        print('collect --------',df.collect())\n        df.collect()\n        df.collect()\n        print('after collect--------------------')\n        \n       \n\n        # ***********************************\n\n        logger.info(\"Job {} finished indexing acs data\".format(job_name))\n    except Exception as e:\n        logger.error(\"Error {}\".format(e))\n        raise e\n    finally:\n        print(\"Done!!!\")\n        \nmain()",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T09:21:15+0000",
+            "config": {
+                "colWidth": 12,
+                "fontSize": 9,
+                "enabled": true,
+                "results": {},
+                "editorSetting": {
+                    "language": "python",
+                    "editOnDblClick": false,
+                    "completionKey": "TAB",
+                    "completionSupport": true
+                },
+                "editorMode": "ace/mode/python",
+                "editorHide": false
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "results": {
+                "code": "SUCCESS",
+                "msg": [
+                    {
+                        "type": "HTML",
+                        "data": "<div class=\"result-alert alert-warning\" role=\"alert\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button><strong>Output is truncated</strong> to 102400 bytes. Learn more about <strong>ZEPPELIN_INTERPRETER_OUTPUT_LIMIT</strong></div>"
+                    }
+                ]
+            },
+            "apps": [],
+            "jobName": "paragraph_1597904860393_-1200549231",
+            "id": "20200820-062740_736602474",
+            "dateCreated": "2020-08-20T06:27:40+0000",
+            "dateStarted": "2020-08-20T09:21:04+0000",
+            "dateFinished": "2020-08-20T09:21:33+0000",
+            "status": "FINISHED",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:180"
+        },
+        {
+            "text": "%spark.pyspark\n",
+            "user": "anonymous",
+            "dateUpdated": "2020-08-20T09:03:42+0000",
+            "config": {
+                "colWidth": 12,
+                "fontSize": 9,
+                "enabled": true,
+                "results": {},
+                "editorSetting": {}
+            },
+            "settings": {
+                "params": {},
+                "forms": {}
+            },
+            "apps": [],
+            "jobName": "paragraph_1597914222812_117342532",
+            "id": "20200820-090342_137203944",
+            "dateCreated": "2020-08-20T09:03:42+0000",
+            "status": "READY",
+            "progressUpdateIntervalMs": 500,
+            "$$hashKey": "object:181"
+        }
+    ],
+    "name": "pyxis/b25064",
+    "id": "2FHWW8V8X",
+    "noteParams": {},
+    "noteForms": {},
+    "angularObjects": {
+        "md:shared_process": [],
+        "spark:shared_process": []
+    },
+    "config": {
+        "isZeppelinNotebookCronEnable": false,
+        "looknfeel": "default",
+        "personalizedMode": "false"
+    },
+    "info": {}
+}
